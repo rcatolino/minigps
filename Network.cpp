@@ -5,15 +5,28 @@
 #include "utils.h"
 
 int Network::sendSMS(const String &dest, const String &msg) const {
-  sim808.buildCommand(F("AT+CMGS="));
+  sim808.buildCommand(F("AT+CMGS=\""));
   sim808.buildCommand(dest);
-  sim808.buildCommand(F("\r"));
+  sim808.buildCommand(F("\"\r"));
+  delay(GRACE_PERIOD);
   sim808.buildCommand(msg);
   sim808.buildCommand(F("\x1a"));
+  delay(GRACE_PERIOD);
+  sim808.buildCommand(F("\r\n"));
 
-  String results[] = {String()};
+  String results[] = {String(), String()};
   results[0].reserve(MAX_SIZE);
-  return sim808.getResults(results);
+  results[1].reserve(MAX_SIZE);
+  sim808.getResults(results);
+  // We only get sending result when the network acknowledges us
+  if (sim808.waitData(10000) != 0) {
+    Serial.println("Error, no answer from network");
+  }
+  sim808.getResults(results);
+  if (results[1] == F("OK")) {
+    return 0;
+  }
+  return -1;
 }
 
 int Network::init(String PIN) {

@@ -12,6 +12,8 @@ class Sim808 {
 
     void buildCommand(const String &cmd_part) const;
 
+    int waitData(int timeout) const;
+
     template<size_t N>
     int getResults(String (&results)[N]) const {
       if (N < 1) {
@@ -37,8 +39,8 @@ class Sim808 {
             Serial.println(result);
           } else {
             Serial.print(F("Keeping : "));
+            Serial.println(String(ret + 1) + "/" + String(N));
             Serial.println(result);
-            Serial.println(results[ret]);
             ret++;
           }
         }

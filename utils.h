@@ -8,8 +8,8 @@
 #define loSwitch 17
 #define RX_A0 14
 #define TX_A1 15
-#define MAX_SIZE 30
-#define GRACE_PERIOD 1000
+#define MAX_SIZE 160
+#define GRACE_PERIOD 200
 
 void switchLed(int length);
 void failure(int code);

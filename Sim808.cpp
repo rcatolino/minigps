@@ -4,6 +4,16 @@
 #include "Sim808.h"
 #include "utils.h"
 
+int Sim808::waitData(int timeout) const {
+  do {
+    if (link.available() > 0) {
+      return 0;
+    }
+    delay(100);
+    timeout -= 100;
+  } while (timeout > 0);
+  return -1;
+}
 void Sim808::buildCommand(const String &cmd_part) const {
   link.print(cmd_part);
 }
