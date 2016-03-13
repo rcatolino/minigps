@@ -3,7 +3,4 @@
 
 #include <Arduino.h>
 
-template<size_t N>
-int sendCommand(const String& cmd, String (&results)[N]);
-
 #endif // Soft_H
