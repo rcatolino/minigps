@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "Network.h"
 #include "Sim808.h"
+#include "phonenumber.h"
 
 #include <Arduino.h>
 #include <LowPower.h>
@@ -12,15 +13,11 @@ SoftwareSerial SerialLonet(RX_A0, TX_A1); // RX = D14/A0, TX = D15/A1
 
 void setup() {
   pinMode(ledPin, OUTPUT);
-  //pinMode(loSwitch, OUTPUT);
   Serial.begin(9600);
   Serial.setTimeout(100);
-  //swithLonet();
   Serial.println(F("Serial FTDI setup done"));
   SerialLonet.begin(9600);
   SerialLonet.listen();
-  //SerialLonet.println("This is the lonet serial line");
-  Serial.println(F("Connecting to the Lonet"));
 
   Sim808 sim808 = Sim808(SerialLonet);
   String results[] = {String()};
@@ -35,7 +32,11 @@ void setup() {
 
   // Create and initialize the network
   Network net = Network(sim808);
-  net.init("1234");
+  if (net.init("1234") != 0) {
+    failure(4);
+  }
+
+  net.sendSMS(F(PHONE_NUMBER), "SMS module initialization successful");
 }
 
 /*

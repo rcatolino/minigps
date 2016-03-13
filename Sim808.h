@@ -10,16 +10,15 @@ class Sim808 {
   public:
     Sim808(SoftwareSerial &sim_link) : link(sim_link) {}
 
+    void buildCommand(const String &cmd_part) const;
+
     template<size_t N>
-    int sendCommand(const String& cmd, String (&results)[N]) const {
-      link.println(cmd);
+    int getResults(String (&results)[N]) const {
       if (N < 1) {
         failure(3);
       }
 
       int ret = 0;
-      Serial.print(F("Sending command : "));
-      Serial.println(cmd);
       delay(GRACE_PERIOD); // Make sure the sim module has time to answer
       do {
         if (ret >= N) {
@@ -46,6 +45,14 @@ class Sim808 {
       } while(link.available() > 0);
 
       return ret;
+    }
+
+    template<size_t N>
+    int sendCommand(const String& cmd, String (&results)[N]) const {
+      link.println(cmd);
+      Serial.print(F("Sending command : "));
+      Serial.println(cmd);
+      return getResults(results);
     }
 
   private:

@@ -9,6 +9,7 @@ class Network {
   public:
     Network(const Sim808 &module) : sim808(module), ccid(F("0")), status(0) {}
     int init(String PIN);
+    int sendSMS(const String &dest, const String &msg) const;
 
   private:
     const Sim808 &sim808;
