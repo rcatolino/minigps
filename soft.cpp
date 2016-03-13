@@ -56,6 +56,39 @@ void nothing() {
   Serial.println(F("No answer"));
 }
 
+int checkNetworkStatus() {
+  String results[] = {String()};
+  results[0].reserve(30);
+  // Check SIM card status
+  sendCommand(F("AT+CPIN?"), results);
+  if (results[0].endsWith(F("READY"))) {
+    Serial.println("SIM card inserted");
+  } else if (results[0].endsWith(F("SIM PIN"))) {
+    Serial.println("Inserting PIN 1234");
+    sendCommand(F("AT+CPIN=1234"), results);
+    if (results[0] != "OK") {
+      return 1;
+    }
+  } else {
+    return 2;
+  }
+
+  sendCommand(F("AT+CCID"), results);
+  const String ccid = results[0];
+  Serial.print("SIM ICCID : ");
+  Serial.println(ccid);
+  // Check GSM signal power
+  delay(2000);
+  sendCommand(F("AT+CSQ"), results);
+  const String strength = results[0].substring(6);
+  if (strength.startsWith(F("0")) || strength.startsWith(F("99"))) {
+    Serial.println("Warning, no signal");
+  }
+  // Check GSM network registration
+  sendCommand(F("AT+CREG"), results);
+  return 0;
+}
+
 void setup() {
   pinMode(ledPin, OUTPUT);
   //pinMode(loSwitch, OUTPUT);
@@ -76,6 +109,7 @@ void setup() {
 
   // Get battery stats
   sendCommand(F("AT+CBC"), results);
+  checkNetworkStatus();
 }
 
 /*
@@ -145,9 +179,6 @@ int sendCommand(const String& cmd, String (&results)[N]) {
 }
 
 void loop() {
-  String results[] = {String()};
-  results[0].reserve(20);
-  sendCommand(F("AT"), results);
   delay(20000);
   //digitalWrite(ledPin, LOW);
   //LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); // Turn everything off until next interrupt/wdt. Draws 0.38 mA
