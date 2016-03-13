@@ -1,4 +1,4 @@
-#include "soft.h"
+// Copyright (C) 2016 raphael.catolino@gmail.com
 #include "utils.h"
 #include "Network.h"
 #include "Sim808.h"
@@ -24,7 +24,7 @@ void setup() {
 
   Sim808 sim808 = Sim808(SerialLonet);
   String results[] = {String()};
-  results[0].reserve(20);
+  results[0].reserve(MAX_SIZE);
   do {
     sim808.sendCommand(F("AT"), results);
     delay(3000);

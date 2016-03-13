@@ -1,3 +1,4 @@
+// Copyright (C) 2016 raphael.catolino@gmail.com
 #include <Arduino.h>
 #include "Network.h"
 #include "Sim808.h"
@@ -6,7 +7,7 @@
 int Network::init(String PIN) {
   int ret = 0;
   String results[] = {String()};
-  results[0].reserve(30);
+  results[0].reserve(MAX_SIZE);
   sim808.sendCommand(F("AT+CPIN?"), results);
   if (results[0].endsWith(F("READY"))) {
     Serial.println("SIM card inserted");
@@ -25,7 +26,7 @@ int Network::init(String PIN) {
   const String ccid = results[0];
   Serial.print("SIM ICCID : ");
   Serial.println(ccid);
-  delay(2000);
+  delay(2*GRACE_PERIOD);
   sim808.sendCommand(F("AT+CSQ"), results);
   const String strength = results[0].substring(6);
   if (strength.startsWith(F("0")) || strength.startsWith(F("99"))) {

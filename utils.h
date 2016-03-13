@@ -1,3 +1,4 @@
+// Copyright (C) 2016 raphael.catolino@gmail.com
 #ifndef utils_H
 #define utils_H
 
@@ -7,6 +8,8 @@
 #define loSwitch 17
 #define RX_A0 14
 #define TX_A1 15
+#define MAX_SIZE 30
+#define GRACE_PERIOD 1000
 
 void switchLed(int length);
 void failure(int code);

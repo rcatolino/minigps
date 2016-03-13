@@ -1,3 +1,4 @@
+// Copyright (C) 2016 raphael.catolino@gmail.com
 #ifndef Sim808_H
 #define Sim808_H
 
@@ -19,8 +20,7 @@ class Sim808 {
       int ret = 0;
       Serial.print(F("Sending command : "));
       Serial.println(cmd);
-      delay(1000);
-
+      delay(GRACE_PERIOD); // Make sure the sim module has time to answer
       do {
         if (ret >= N) {
           while (link.available() > 0) {
@@ -29,17 +29,7 @@ class Sim808 {
         } else {
           String &result = results[ret];
           result.remove(0);
-          // A result is complete when : we run out of bytes to read, the buffer is full or an end of line is reached
-          while (link.available() > 0 && result.length() < 19) {
-            char lastchar = (char) link.read();
-            if (lastchar == -1) {
-              failure(2);
-              break;
-            } else if (lastchar == '\n' || lastchar == '\r') {
-              break;
-            }
-            result += lastchar;
-          }
+          getline(result);
 
           if (result.length() == 0) {
             // ignore empty line
@@ -59,6 +49,7 @@ class Sim808 {
     }
 
   private:
+    void getline(String &result) const;
     SoftwareSerial &link;
 
 };

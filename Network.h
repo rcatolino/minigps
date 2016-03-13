@@ -1,3 +1,4 @@
+// Copyright (C) 2016 raphael.catolino@gmail.com
 #ifndef Network_H
 #define Network_H
 
