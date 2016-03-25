@@ -57,13 +57,21 @@ int Network::init(String PIN) {
   Serial.print("SIM ICCID : ");
   Serial.println(ccid);
   sim808.sendCommand(F("AT+CMGF=1"), results);
-  delay(2*GRACE_PERIOD);
-  sim808.sendCommand(F("AT+CSQ"), results);
-  const String strength = results[0].substring(6);
-  if (strength.startsWith(F("0")) || strength.startsWith(F("99"))) {
-    Serial.println("Warning, no signal");
+
+  int timeout = 10*GRACE_PERIOD;
+  String strength;
+  do {
+    sim808.sendCommand(F("AT+CSQ"), results);
+    strength = results[0].substring(6);
+    delay(GRACE_PERIOD);
+    timeout -= GRACE_PERIOD;
+  } while (timeout > 0 && (strength.startsWith(F("0")) || strength.startsWith(F("99"))));
+
+  if (timeout <= 0) {
+    Serial.print("Warning, no signal.");
     ret = 3;
   }
+
   sim808.sendCommand(F("AT+CREG?"), results);
   if (results[0].endsWith(F("5")) || results[0].endsWith(F("2"))) {
     Serial.println("Registered");

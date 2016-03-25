@@ -1,8 +1,9 @@
 // Copyright (C) 2016 raphael.catolino@gmail.com
-#include "utils.h"
+#include "GPS.h"
 #include "Network.h"
-#include "Sim808.h"
 #include "phonenumber.h"
+#include "Sim808.h"
+#include "utils.h"
 
 #include <Arduino.h>
 #include <LowPower.h>
@@ -12,6 +13,7 @@ const int wake_up_on = 2;
 SoftwareSerial SerialLonet(RX_A0, TX_A1); // RX = D14/A0, TX = D15/A1
 Sim808 sim808 = Sim808(SerialLonet);
 Network net = Network(sim808);
+GPS gps = GPS(sim808);
 
 void setup() {
   pinMode(ledPin, OUTPUT);
@@ -36,7 +38,11 @@ void setup() {
     failure(4);
   }
 
+  gps.init();
   net.sendSMS(F(PHONE_NUMBER), "SMS module initialization successful");
+  String gps_data;
+  gps.getData(gps_data);
+  net.sendSMS(F(PHONE_NUMBER), gps_data);
 }
 
 void serialEvent() {
