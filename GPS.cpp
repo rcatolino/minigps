@@ -8,7 +8,7 @@
 
 
 int GPS::init() const {
-  setStatus(1);
+  powerOn();
   if (getStatus() != 1) {
     return -1;
   }
@@ -27,10 +27,10 @@ int GPS::getStatus() const {
   return 0;
 }
 
-int GPS::setStatus(int status) const {
+int GPS::powerOn() const {
   String results[] = {String()};
   results[0].reserve(MAX_SIZE);
-  sim808.sendCommand("AT+CGNSPWR=" + status, results);
+  sim808.sendCommand(F("AT+CGNSPWR=1"), results);
   if (results[0] != F("OK")) {
     return -1;
   }
@@ -66,11 +66,11 @@ int GPS::getData(String &data) const {
     return -1;
   }
 
-  if (results[0].startsWith(F("+CGNSINF: "))) {
+  if (!results[0].startsWith(F("+CGNSINF: "))) {
     Serial.print("Error, CGNSINF answer doesn't start with +CGNSINF: ");
     return -2;
   }
 
-  data = results[0];
+  data = results[0].substring(10);
   return 0;
 }

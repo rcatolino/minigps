@@ -14,6 +14,8 @@ SoftwareSerial SerialLonet(RX_A0, TX_A1); // RX = D14/A0, TX = D15/A1
 Sim808 sim808 = Sim808(SerialLonet);
 Network net = Network(sim808);
 GPS gps = GPS(sim808);
+int clock = 0;
+int fix_sent = 0;
 
 void setup() {
   pinMode(ledPin, OUTPUT);
@@ -40,9 +42,6 @@ void setup() {
 
   gps.init();
   net.sendSMS(F(PHONE_NUMBER), "SMS module initialization successful");
-  String gps_data;
-  gps.getData(gps_data);
-  net.sendSMS(F(PHONE_NUMBER), gps_data);
 }
 
 void serialEvent() {
@@ -59,7 +58,22 @@ void serialEvent() {
 }
 
 void loop() {
+  String gps_data;
   delay(100);
+  clock += 100;
+  if (clock < 0) {
+    clock = 0;
+  }
+
+  if ((clock % 20000) == 0) {
+    digitalWrite(ledPin, HIGH);
+    gps.getData(gps_data);
+    if (gps_data.startsWith("1,1") && fix_sent == 0) {
+      fix_sent = 1;
+      net.sendSMS(F(PHONE_NUMBER), gps_data);
+    }
+    digitalWrite(ledPin, LOW);
+  }
   //digitalWrite(ledPin, LOW);
   //LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); // Turn everything off until next interrupt/wdt. Draws 0.38 mA
   //LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF); // Turn CPU and selected subsystems off, Draws 1.01 mA

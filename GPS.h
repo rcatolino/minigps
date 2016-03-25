@@ -10,7 +10,7 @@ class GPS {
     GPS(const Sim808 &module) : sim808(module) {}
     int init() const;
     int getStatus() const;
-    int setStatus(int status) const;
+    int powerOn() const;
     int getData(String &data) const;
 
   private:
