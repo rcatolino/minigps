@@ -4,6 +4,11 @@
 #include "Sim808.h"
 #include "utils.h"
 
+void Network::receiveSMS(const String &idx, String (&results)[2]) const {
+  // Returns the number of unread messages
+  sim808.sendCommand("AT+CMGR=" + idx, results);
+}
+
 int Network::sendSMS(const String &dest, const String &msg) const {
   sim808.buildCommand(F("AT+CMGS=\""));
   sim808.buildCommand(dest);

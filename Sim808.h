@@ -57,8 +57,9 @@ class Sim808 {
       return getResults(results);
     }
 
+    int getline(String &result) const;
+
   private:
-    void getline(String &result) const;
     SoftwareSerial &link;
 
 };

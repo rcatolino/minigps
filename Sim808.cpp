@@ -19,7 +19,8 @@ void Sim808::buildCommand(const String &cmd_part) const {
   link.print(cmd_part);
 }
 
-void Sim808::getline(String &result) const {
+int Sim808::getline(String &result) const {
+  int read = link.available() ? 0 : -1;
   // A result is complete when : we run out of bytes to read, the max size is reached or an end of line is reached
   while (link.available() > 0 && result.length() < MAX_SIZE) {
     char lastchar = (char) link.read();
@@ -30,7 +31,10 @@ void Sim808::getline(String &result) const {
       break;
     }
     result += lastchar;
+    read++;
   }
+
+  return read;
 }
 
 

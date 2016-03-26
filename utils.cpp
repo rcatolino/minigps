@@ -3,9 +3,9 @@
 #include "utils.h"
 
 void switchLed(int length) {
-  digitalWrite(ledPin, HIGH);
+  digitalWrite(LED, HIGH);
   delay(length);
-  digitalWrite(ledPin, LOW);
+  digitalWrite(LED, LOW);
 }
 
 void failure(int code) {
