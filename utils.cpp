@@ -1,5 +1,6 @@
 // Copyright (C) 2016 raphael.catolino@gmail.com
 #include <Arduino.h>
+#include <SoftwareSerial.h>
 #include "utils.h"
 
 void switchLed(int length) {
@@ -8,16 +9,33 @@ void switchLed(int length) {
   digitalWrite(LED, LOW);
 }
 
-void failure(int code) {
+void serialPipe(SoftwareSerial &dst) {
+  while (Serial.available()) {
+    dst.write(Serial.read());
+  }
+
+  delay(GRACE_PERIOD);
+  while (dst.available()) {
+    Serial.write(dst.read());
+  }
+}
+
+void failure(int code, SoftwareSerial &dst) {
   Serial.print(F("FAIL, CODE "));
   Serial.println(code);
+  Serial.println("Waiting for input");
+  int c = 0;
   while (true) {
-    switchLed(2000);
-    delay(1000);
-    for (int i = 0; i < code; i++) {
-      switchLed(200);
+    delay(100);
+    c += 100;
+    c = c % 5000;
+    serialPipe(dst);
+    if (c == 0) {
+      for (int i = 0; i < code; i++) {
+        switchLed(100);
+        delay(100);
+      }
     }
-    delay(1000);
   }
 }
 

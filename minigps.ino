@@ -38,13 +38,15 @@ void setup() {
     delay(3000);
   } while (results[0] != "OK");
 
+  // Set more verbose error reporting
+  sim808.sendCommand(F("AT+CMEE=2"), results);
   // Get battery stats
   sim808.sendCommand(F("AT+CBC"), results);
   String cbc = results[0];
 
   // Create and initialize the network
   if (net.init("1234") != 0) {
-    failure(4);
+    failure(4, SerialLonet);
   }
 
   gps.init();
@@ -54,16 +56,7 @@ void setup() {
 }
 
 void serialEvent() {
-  while (Serial.available()) {
-    char inChar = (char) Serial.read();
-    SerialLonet.write(inChar);
-  }
-
-  delay(GRACE_PERIOD);
-  while (SerialLonet.available()) {
-    char inChar = (char) SerialLonet.read();
-    Serial.write(inChar);
-  }
+  serialPipe(SerialLonet);
 }
 
 void loop() {

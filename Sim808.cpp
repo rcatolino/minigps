@@ -25,7 +25,7 @@ int Sim808::getline(String &result) const {
   while (link.available() > 0 && result.length() < MAX_SIZE) {
     char lastchar = (char) link.read();
     if (lastchar == -1) {
-      failure(2);
+      failure(2, link);
       break;
     } else if (lastchar == '\n' || lastchar == '\r') {
       break;

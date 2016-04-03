@@ -17,7 +17,7 @@ class Sim808 {
     template<size_t N>
     int getResults(String (&results)[N]) const {
       if (N < 1) {
-        failure(3);
+        failure(3, link);
       }
 
       int ret = 0;

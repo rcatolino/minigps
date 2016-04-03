@@ -13,7 +13,8 @@
 #define GRACE_PERIOD 200
 
 void switchLed(int length);
-void failure(int code);
+void serialPipe(SoftwareSerial &dst);
+void failure(int code, SoftwareSerial &dst);
 void error(const String& result);
 void ok(const String& result);
 void nothing();
