@@ -1,6 +1,6 @@
 // Copyright (C) 2016 raphael.catolino@gmail.com
 #include <Arduino.h>
-#include <SoftwareSerial.h>
+#include "NSoftwareSerial/NSoftwareSerial.h"
 #include "utils.h"
 
 void switchLed(int length) {

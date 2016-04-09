@@ -4,10 +4,10 @@
 #include "phonenumber.h"
 #include "Sim808.h"
 #include "utils.h"
+#include "NSoftwareSerial/NSoftwareSerial.h"
 
 #include <Arduino.h>
 #include <LowPower.h>
-#include <SoftwareSerial.h>
 
 const int wake_up_on = 2;
 SoftwareSerial SerialLonet(RX_A0, TX_A1); // RX = D14/A0, TX = D15/A1
@@ -40,6 +40,8 @@ void setup() {
 
   // Set more verbose error reporting
   sim808.sendCommand(F("AT+CMEE=2"), results);
+  // Activate software flow control
+  sim808.sendCommand(F("AT+IFC=1,1"), results);
   // Get battery stats
   sim808.sendCommand(F("AT+CBC"), results);
   String cbc = results[0];
@@ -59,8 +61,27 @@ void serialEvent() {
   serialPipe(SerialLonet);
 }
 
-void loop() {
+void cmd_getstat() {
+  String battery[] = {String()};
+  String net_signal[] = {String()};
+  digitalWrite(LED, HIGH);
+  sim808.sendCommand(F("AT+CBC"), battery);
+  sim808.sendCommand(F("AT+CSQ"), net_signal);
+  net.sendSMS(F(PHONE_NUMBER), battery[0] + ", " + net_signal[0]);
+  digitalWrite(LED, LOW);
+}
+
+void cmd_getpos() {
   String gps_data;
+  digitalWrite(LED, HIGH);
+  gps.getData(gps_data);
+  if (gps_data.startsWith("1,1")) {
+    net.sendSMS(F(PHONE_NUMBER), gps_data);
+  }
+  digitalWrite(LED, LOW);
+}
+
+void loop() {
   delay(100);
   clock += 100;
   if (clock < 0) {
@@ -85,23 +106,20 @@ void loop() {
           String results[] = {String(), String()};
           net.receiveSMS(idx, results);
           Serial.println(results[0]);
-          Serial.println(results[1]);
+          String &cmd = results[1];
+          if (cmd == "getpos") {
+            cmd_getpos();
+          } else if (cmd == "getstat") {
+            cmd_getstat();
+          } else {
+            Serial.print("Unkown command : ");
+            Serial.println(cmd);
+          }
         }
         buffer.remove(0);
       }
-      //net.readSMS();
     }
-  /*
-    digitalWrite(ledPin, HIGH);
-    gps.getData(gps_data);
-    if (gps_data.startsWith("1,1") && fix_sent == 0) {
-      fix_sent = 1;
-      net.sendSMS(F(PHONE_NUMBER), gps_data);
-    }
-    digitalWrite(ledPin, LOW);
-  */
   }
-  //digitalWrite(ledPin, LOW);
   //LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); // Turn everything off until next interrupt/wdt. Draws 0.38 mA
   //LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF); // Turn CPU and selected subsystems off, Draws 1.01 mA
 }

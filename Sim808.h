@@ -3,7 +3,7 @@
 #define Sim808_H
 
 #include <Arduino.h>
-#include <SoftwareSerial.h>
+#include "NSoftwareSerial/NSoftwareSerial.h"
 #include "utils.h"
 
 class Sim808 {
