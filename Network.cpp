@@ -63,13 +63,14 @@ int Network::init(String PIN) {
   Serial.println(ccid);
   sim808.sendCommand(F("AT+CMGF=1"), results);
 
-  int timeout = 10*GRACE_PERIOD;
+#define interval 5*GRACE_PERIOD
+  int timeout = 10*interval;
   String strength;
   do {
     sim808.sendCommand(F("AT+CSQ"), results);
     strength = results[0].substring(6);
-    delay(GRACE_PERIOD);
-    timeout -= GRACE_PERIOD;
+    delay(interval);
+    timeout -= interval;
   } while (timeout > 0 && (strength.startsWith(F("0")) || strength.startsWith(F("99"))));
 
   if (timeout <= 0) {

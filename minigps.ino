@@ -84,7 +84,6 @@ void loop() {
           Serial.println("New SMS in " + mem + " memory. Index : " + idx);
           String results[] = {String(), String()};
           net.receiveSMS(idx, results);
-          Serial.println("trololo");
           Serial.println(results[0]);
           Serial.println(results[1]);
         }
