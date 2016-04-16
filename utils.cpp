@@ -3,6 +3,14 @@
 #include "NSoftwareSerial/NSoftwareSerial.h"
 #include "utils.h"
 
+void setLoSleep(int mode) {
+  if (mode) {
+    digitalWrite(LO_POW_CTL, HIGH);
+  } else {
+    digitalWrite(LO_POW_CTL, LOW);
+  }
+}
+
 void switchLed(int length) {
   digitalWrite(LED, HIGH);
   delay(length);

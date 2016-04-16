@@ -19,12 +19,16 @@ int last_event = 0; // Number of loop cycle since last event
 volatile int lo_active = 0; // Wether the lonet is waiting with data
 
 void lo_event() {
+  setLoSleep(0);
   lo_active = 1;
 }
 
 void setup() {
   pinMode(LED, OUTPUT);
   pinMode(LO_INT, INPUT);
+  pinMode(LO_POW_CTL, OUTPUT);
+  setLoSleep(0);
+  digitalWrite(LO_POW_CTL, LOW);
   Serial.begin(9600);
   Serial.setTimeout(100);
   Serial.println(F("Serial FTDI setup done"));
@@ -40,8 +44,8 @@ void setup() {
 
   // Set more verbose error reporting
   sim808.sendCommand(F("AT+CMEE=2"), results);
-  // Activate software flow control
-  sim808.sendCommand(F("AT+IFC=1,1"), results);
+  // Activate DTR power management (pull high to enter sleep mode)
+  sim808.sendCommand(F("AT+CSCLK=1"), results);
   // Get battery stats
   sim808.sendCommand(F("AT+CBC"), results);
   String cbc = results[0];
@@ -114,13 +118,20 @@ void do_work() {
 
 void gotosleep() {
     Serial.end();
-    LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); // Turn everything off until next interrupt/wdt. Draws 0.38 mA
+    // Enable sleep mode on the lonet.
+    setLoSleep(1);
+    // Turn everything off on the mcu until next interrupt/wdt. Draws ~300 uA with raw power
+    LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+    setLoSleep(0);
     Serial.begin(9600);
+    delay(1000);
 }
 
 void loop() {
   if (last_event >= 8) {
+    Serial.println("going to sleep");
     gotosleep();
+    Serial.println("waking up");
     clock = 0;
   } else {
     delay(GRACE_PERIOD);
