@@ -14,13 +14,12 @@ SoftwareSerial SerialLonet(RX_A0, TX_A1); // RX = D14/A0, TX = D15/A1
 Sim808 sim808 = Sim808(SerialLonet);
 Network net = Network(sim808);
 GPS gps = GPS(sim808);
-int clock = 0; // Resets each time we go to sleep and on overflow
 int last_event = 0; // Number of loop cycle since last event
 volatile int lo_active = 0; // Wether the lonet is waiting with data
 
 void lo_event() {
   setLoSleep(0);
-  lo_active = 1;
+  lo_active += 1;
 }
 
 void setup() {
@@ -78,11 +77,24 @@ void cmd_getstat() {
 
 void cmd_getpos() {
   String gps_data;
+  unsigned int fix_attempt = 0;
   digitalWrite(LED, HIGH);
-  gps.getData(gps_data);
-  if (gps_data.startsWith("1,1")) {
-    net.sendSMS(F(PHONE_NUMBER), gps_data);
+  if (!gps.getStatus()) {
+    gps.powerOn();
   }
+
+  do {
+    gps.getData(gps_data);
+    if (gps_data.startsWith("1,1")) {
+      net.sendSMS(F(PHONE_NUMBER), gps_data);
+      fix_attempt = MAX_FIX_ATTEMPT+1;
+    } else {
+      setLoSleep(1);
+      delay(20*GRACE_PERIOD);
+      setLoSleep(0);
+      fix_attempt += 1;
+    }
+  } while (fix_attempt < MAX_FIX_ATTEMPT);
   digitalWrite(LED, LOW);
 }
 
@@ -119,12 +131,14 @@ void do_work() {
 void gotosleep() {
     Serial.end();
     // Enable sleep mode on the lonet.
+    gps.powerOff();
     setLoSleep(1);
     // Turn everything off on the mcu until next interrupt/wdt. Draws ~300 uA with raw power
     LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
     setLoSleep(0);
+    gps.powerOn();
     Serial.begin(9600);
-    delay(1000);
+    delay(4*GRACE_PERIOD);
 }
 
 void loop() {
@@ -132,14 +146,12 @@ void loop() {
     Serial.println("going to sleep");
     gotosleep();
     Serial.println("waking up");
-    clock = 0;
   } else {
     delay(GRACE_PERIOD);
-    clock += GRACE_PERIOD;
   }
 
-  if (lo_active) {
-    lo_active = 0;
+  if (lo_active > 0) {
+    lo_active -= 1;
     last_event = 0;
     do_work();
   } else {

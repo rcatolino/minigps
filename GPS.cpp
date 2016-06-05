@@ -6,7 +6,6 @@
 #include "Sim808.h"
 #include "utils.h"
 
-
 int GPS::init() const {
   powerOn();
   if (getStatus() != 1) {
@@ -38,6 +37,17 @@ int GPS::powerOn() const {
   return 0;
 }
 
+int GPS::powerOff() const {
+  String results[] = {String()};
+  results[0].reserve(MAX_SIZE);
+  sim808.sendCommand(F("AT+CGNSPWR=0"), results);
+  if (results[0] != F("OK")) {
+    return -1;
+  }
+
+  return 0;
+}
+
 /*
 int GPS::setSeqType(const String &seq) {
   // Seq can be :
@@ -62,7 +72,7 @@ int GPS::getData(String &data) const {
   sim808.sendCommand("AT+CGNSINF", results);
 
   if (results[0].length() <= 14) {
-    Serial.println("Error, CGNSINF answer is to short to be valid");
+    Serial.println("Error, CGNSINF answer is too short to be valid");
     return -1;
   }
 

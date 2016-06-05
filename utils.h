@@ -11,6 +11,7 @@
 #define LO_INT 2
 #define MAX_SIZE 160
 #define GRACE_PERIOD 200
+#define MAX_FIX_ATTEMPT 5
 
 void setLoSleep(int mode);
 void switchLed(int length);
