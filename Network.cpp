@@ -4,6 +4,28 @@
 #include "Sim808.h"
 #include "utils.h"
 
+int Network::popSMS(String &sms_txt) const {
+  String results[] = {String(), String()};
+  results[0].reserve(MAX_SIZE);
+  results[1].reserve(MAX_SIZE);
+  // List all unread SMS but don't mark them as read yet.
+  sim808.sendCommand("AT+CMGL=\"REC UNREAD\",1", results);
+  if (results[0] == F("OK")) {
+    // No unread SMS
+    return 0;
+  }
+
+  sms_txt = results[1];
+  results[0].remove(0, 7);
+  int coma = results[0].indexOf(',');
+  String idx = results[0].substring(0, coma);
+  Serial.println("New SMS at index : " + idx);
+  // Mark the SMS as read
+  String discard[] = {String()};
+  sim808.sendCommand("AT+CMGR="+idx, discard);
+  return 1;
+}
+
 void Network::receiveSMS(const String &idx, String (&results)[2]) const {
   // Returns the number of unread messages
   sim808.sendCommand("AT+CMGR=" + idx, results);

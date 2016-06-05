@@ -6,15 +6,6 @@
 #include "Sim808.h"
 #include "utils.h"
 
-int GPS::init() const {
-  powerOn();
-  if (getStatus() != 1) {
-    return -1;
-  }
-
-  return 0;
-}
-
 int GPS::getStatus() const {
   String results[] = {String()};
   results[0].reserve(MAX_SIZE);

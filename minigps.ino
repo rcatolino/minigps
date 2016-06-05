@@ -3,11 +3,14 @@
 #include "Network.h"
 #include "phonenumber.h"
 #include "Sim808.h"
+#include "State.h"
 #include "utils.h"
 #include "NSoftwareSerial/NSoftwareSerial.h"
 
 #include <Arduino.h>
 #include <LowPower.h>
+
+#define DEBUG 1
 
 const int wake_up_on = 2;
 SoftwareSerial SerialLonet(RX_A0, TX_A1); // RX = D14/A0, TX = D15/A1
@@ -18,8 +21,7 @@ int last_event = 0; // Number of loop cycle since last event
 volatile int lo_active = 0; // Wether the lonet is waiting with data
 
 void lo_event() {
-  setLoSleep(0);
-  lo_active += 1;
+  lo_active = 1;
 }
 
 void setup() {
@@ -27,7 +29,6 @@ void setup() {
   pinMode(LO_INT, INPUT);
   pinMode(LO_POW_CTL, OUTPUT);
   setLoSleep(0);
-  digitalWrite(LO_POW_CTL, LOW);
   Serial.begin(9600);
   Serial.setTimeout(100);
   Serial.println(F("Serial FTDI setup done"));
@@ -41,8 +42,11 @@ void setup() {
     delay(3000);
   } while (results[0] != "OK");
 
+#ifdef DEBUG
   // Set more verbose error reporting
   sim808.sendCommand(F("AT+CMEE=2"), results);
+#endif //DEBUG
+
   // Activate DTR power management (pull high to enter sleep mode)
   sim808.sendCommand(F("AT+CSCLK=1"), results);
   // Get battery stats
@@ -54,12 +58,11 @@ void setup() {
     failure(4, SerialLonet);
   }
 
-  gps.init();
   net.sendSMS(F(PHONE_NUMBER), "SMS module initialization successful. Battery state = " + cbc);
-
   attachInterrupt(digitalPinToInterrupt(LO_INT), lo_event, FALLING);
 }
 
+// Called when data is received from debug port
 void serialEvent() {
   serialPipe(SerialLonet);
   last_event = 0;
@@ -98,65 +101,77 @@ void cmd_getpos() {
   digitalWrite(LED, LOW);
 }
 
-void do_work() {
-  Serial.println("Event Received from lonet");
+void discard_line() {
   String buffer;
   buffer.reserve(MAX_SIZE);
-  delay(2*GRACE_PERIOD);
+  if (sim808.getline(buffer) == 0) {
+    sim808.getline(buffer);
+  }
+  Serial.println(buffer);
+}
+
+void handle_notification(State &st) {
+  Serial.println("Enter HANDLE NOTIFICATION state");
+  String buffer;
+  buffer.reserve(MAX_SIZE);
   while (sim808.getline(buffer) != -1) {
     Serial.println(buffer);
     if (buffer.startsWith(F("+CMTI"))) {
-      buffer.remove(0, 7);
-      int coma = buffer.indexOf(',');
-      String mem = buffer.substring(0, coma);
-      String idx = buffer.substring(coma+1);
-      Serial.println("New SMS in " + mem + " memory. Index : " + idx);
-      String results[] = {String(), String()};
-      net.receiveSMS(idx, results);
-      Serial.println(results[0]);
-      String &cmd = results[1];
-      if (cmd == "getpos") {
-        cmd_getpos();
-      } else if (cmd == "getstat") {
-        cmd_getstat();
-      } else {
-        Serial.print("Unkown command : ");
-        Serial.println(cmd);
-      }
+      // We have a new SMS
+    } else if (buffer.startsWith(F("+CMT"))) {
+      discard_line();
+    } else if (buffer.startsWith(F("CBM"))) {
+      // Ignore cell broadcasts
+      discard_line();
+    } else if (buffer.startsWith(F("CDS"))) {
+      // SMS Status Report
+      // TODO: verify the SMS status and try to resend it if failed
+      discard_line();
     }
+
     buffer.remove(0);
   }
+
+  while (net.popSMS(buffer)) {
+    Serial.println(buffer);
+    if (buffer == "getpos") {
+      cmd_getpos();
+    } else if (buffer == "getstat") {
+      cmd_getstat();
+    } else {
+      Serial.print("Unkown command : ");
+      Serial.println(buffer);
+    }
+  }
+
+  st.next = sleep_active;
+  Serial.println("Leave HANDLE NOTIFICATION state");
 }
 
-void gotosleep() {
+void sleep_active(State &st) {
+    Serial.println("Enter SLEEP ACTIVE state");
     Serial.end();
-    // Enable sleep mode on the lonet.
-    gps.powerOff();
+    // Enable sleep mode on the lonet. Still pulls ~15 mA.
     setLoSleep(1);
     // Turn everything off on the mcu until next interrupt/wdt. Draws ~300 uA with raw power
     LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
-    setLoSleep(0);
-    gps.powerOn();
-    Serial.begin(9600);
-    delay(4*GRACE_PERIOD);
+
+    if (lo_active > 0) {
+      lo_active = 0;
+      setLoSleep(0);
+      Serial.begin(9600);
+      st.next = handle_notification;
+      delay(2*GRACE_PERIOD);
+    } else {
+//      st.next = sleep_powerdown;
+      st.next = sleep_active;
+    }
+    Serial.println("Leave SLEEP ACTIVE state");
 }
 
+State st = State(handle_notification);
 void loop() {
-  if (last_event >= 8) {
-    Serial.println("going to sleep");
-    gotosleep();
-    Serial.println("waking up");
-  } else {
-    delay(GRACE_PERIOD);
-  }
-
-  if (lo_active > 0) {
-    lo_active -= 1;
-    last_event = 0;
-    do_work();
-  } else {
-    last_event++;
-  }
+  st.next(st);
   //LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_ON, TWI_OFF); // Turn CPU and selected subsystems off, Draws 1.01 mA
 }
 
