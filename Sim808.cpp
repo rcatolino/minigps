@@ -4,6 +4,32 @@
 #include "Sim808.h"
 #include "utils.h"
 
+#define DEBUG 1
+
+void Sim808::init() {
+  String results[] = {String()};
+  results[0].reserve(MAX_SIZE);
+  unsigned int count = 0;
+  do {
+    if (count == 3) {
+      // No answer, maybe the module is off
+      loSwitchPower();
+      count = 0;
+    }
+    sendCommand(F("AT"), results);
+    delay(3000);
+    count++;
+  } while (results[0] != "OK");
+
+#ifdef DEBUG
+  // Set more verbose error reporting
+  sendCommand(F("AT+CMEE=2"), results);
+#endif //DEBUG
+
+  // Activate DTR power management (pull high to enter sleep mode)
+  sendCommand(F("AT+CSCLK=1"), results);
+}
+
 int Sim808::waitData(int timeout) const {
   do {
     if (link.available() > 0) {
@@ -25,7 +51,7 @@ int Sim808::getline(String &result) const {
   while (link.available() > 0 && result.length() < MAX_SIZE) {
     char lastchar = (char) link.read();
     if (lastchar == -1) {
-      failure(2, link);
+      Serial.println(F("lonet serial interrupted"));
       break;
     } else if (lastchar == '\n' || lastchar == '\r') {
       break;

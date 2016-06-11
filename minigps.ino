@@ -8,9 +8,6 @@
 #include "NSoftwareSerial/NSoftwareSerial.h"
 
 #include <Arduino.h>
-#include <LowPower.h>
-
-#define DEBUG 1
 
 const int wake_up_on = 2;
 SoftwareSerial SerialLonet(RX_A1, TX_A0); // RX = D15/A1, TX = D14/A0
@@ -28,8 +25,6 @@ void setup() {
   pinMode(LED, OUTPUT);
   pinMode(LO_INT, INPUT);
   pinMode(LO_SLEEP_CTL, OUTPUT);
-  digitalWrite(LO_POWER_SWITCH, LOW);
-  pinMode(LO_POWER_SWITCH, OUTPUT);
   setLoSleep(0);
   Serial.begin(9600);
   Serial.setTimeout(100);
@@ -37,26 +32,19 @@ void setup() {
   SerialLonet.begin(9600);
   SerialLonet.listen();
 
+  pinMode(LO_POWER_SWITCH, OUTPUT);
+  digitalWrite(LO_POWER_SWITCH, HIGH);
+
+  sim808.init();
+
   String results[] = {String()};
   results[0].reserve(MAX_SIZE);
-  do {
-    sim808.sendCommand(F("AT"), results);
-    delay(3000);
-  } while (results[0] != "OK");
-
-#ifdef DEBUG
-  // Set more verbose error reporting
-  sim808.sendCommand(F("AT+CMEE=2"), results);
-#endif //DEBUG
-
-  // Activate DTR power management (pull high to enter sleep mode)
-  sim808.sendCommand(F("AT+CSCLK=1"), results);
   // Get battery stats
   sim808.sendCommand(F("AT+CBC"), results);
   String cbc = results[0];
 
   // Create and initialize the network
-  if (net.init("1234") != 0) {
+  if (net.init(SIM_PIN) != 0) {
     failure(4, SerialLonet);
   }
 
@@ -115,11 +103,13 @@ void discard_line() {
 void handle_notification(State &st) {
   Serial.println("Enter HANDLE NOTIFICATION state");
   String buffer;
+  int received_sms = 0;
   buffer.reserve(MAX_SIZE);
   while (sim808.getline(buffer) != -1) {
     Serial.println(buffer);
     if (buffer.startsWith(F("+CMTI"))) {
       // We have a new SMS
+      received_sms = 1;
     } else if (buffer.startsWith(F("+CMT"))) {
       discard_line();
     } else if (buffer.startsWith(F("CBM"))) {
@@ -138,12 +128,18 @@ void handle_notification(State &st) {
     Serial.println(buffer);
     if (buffer == "getpos") {
       cmd_getpos();
+      received_sms = 0;
     } else if (buffer == "getstat") {
       cmd_getstat();
+      received_sms = 0;
     } else {
       Serial.print("Unkown command : ");
       Serial.println(buffer);
     }
+  }
+
+  if (received_sms) {
+    failure(8, SerialLonet);
   }
 
   st.next = sleep_active;
@@ -152,32 +148,34 @@ void handle_notification(State &st) {
 
 void sleep_powerdown(State &st) {
   Serial.println("Enter SLEEP POWERDOWN state");
-  Serial.end();
   // Power down the lonet
   String results[] = {String()};
   results[0].reserve(MAX_SIZE);
-  sim808.sendCommand(F("AT+CPOWD=1"), results);
-  // Power down the arduino, until next interrupt
-  LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+  do {
+    sim808.sendCommand(F("AT+CPOWD=1"), results);
+    delay(10*GRACE_PERIOD);
+  } while (results[0] != "NORMAL POWER DOWN");
+  // Power down the arduino, until TIME_POWD has run out
+  sleep(TIME_POWD);
   loSwitchPower(); // Restart the lonet
-  delay(4*GRACE_PERIOD);
+  sim808.init();
+  net.init(SIM_PIN);
   st.next = sleep_active;
+  Serial.println("Leave SLEEP POWERDOWN state");
 }
 
 void sleep_active(State &st) {
   Serial.println("Enter SLEEP ACTIVE state");
-  Serial.end();
   // Enable sleep mode on the lonet. Still pulls ~15 mA.
   setLoSleep(1);
-  // Turn everything off on the mcu until next interrupt/wdt. Draws ~300 uA with raw power
-  LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+  // Turn everything off on the mcu until next interrupt or until TIME_ACTIVE has run out
+  // Draws ~300 uA with raw power
+  sleep(TIME_ACTIVE);
 
+  setLoSleep(0);
   if (lo_active > 0) {
     lo_active = 0;
-    setLoSleep(0);
-    Serial.begin(9600);
     st.next = handle_notification;
-    delay(2*GRACE_PERIOD);
   } else {
     st.next = sleep_powerdown;
     //st.next = sleep_active;

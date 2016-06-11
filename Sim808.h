@@ -10,6 +10,8 @@ class Sim808 {
   public:
     Sim808(SoftwareSerial &sim_link) : link(sim_link) {}
 
+    void init();
+
     void buildCommand(const String &cmd_part) const;
 
     int waitData(int timeout) const;
@@ -21,7 +23,7 @@ class Sim808 {
       }
 
       int ret = 0;
-      delay(GRACE_PERIOD); // Make sure the sim module has time to answer
+      delay(5*GRACE_PERIOD); // Make sure the sim module has time to answer
       do {
         if (ret >= N) {
           while (link.available() > 0) {

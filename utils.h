@@ -13,7 +13,11 @@
 #define MAX_SIZE 160
 #define GRACE_PERIOD 200
 #define MAX_FIX_ATTEMPT 5
+#define TIME_POWD 2
+#define TIME_ACTIVE 2
+#define SIM_PIN F("1234")
 
+void sleep(const unsigned int units);
 void loSwitchPower();
 void setLoSleep(int mode);
 void switchLed(int length);

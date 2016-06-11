@@ -1,12 +1,24 @@
 // Copyright (C) 2016 raphael.catolino@gmail.com
 #include <Arduino.h>
+#include <LowPower.h>
+#include <limits.h>
 #include "NSoftwareSerial/NSoftwareSerial.h"
 #include "utils.h"
 
+void sleep(const unsigned int units) {
+  // units are multiples of 8s
+  Serial.end();
+  for (unsigned int slept = 0; slept < units && slept != UINT_MAX; slept++) {
+    LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  }
+  Serial.begin(9600);
+  delay(4*GRACE_PERIOD);
+}
+
 void loSwitchPower() {
-    digitalWrite(LO_POWER_SWITCH, HIGH);
-    delay(2200);
     digitalWrite(LO_POWER_SWITCH, LOW);
+    delay(2200);
+    digitalWrite(LO_POWER_SWITCH, HIGH);
 }
 
 void setLoSleep(int mode) {

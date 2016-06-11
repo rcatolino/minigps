@@ -4,13 +4,21 @@
 #include "Sim808.h"
 #include "utils.h"
 
+#define POP_SMS_MAX_RETRY 3
 int Network::popSMS(String &sms_txt) const {
+  unsigned int count = 0;
   String results[] = {String(), String()};
   results[0].reserve(MAX_SIZE);
   results[1].reserve(MAX_SIZE);
   // List all unread SMS but don't mark them as read yet.
-  sim808.sendCommand("AT+CMGL=\"REC UNREAD\",1", results);
-  if (results[0] == F("OK")) {
+  do {
+    sim808.sendCommand("AT+CMGL=\"REC UNREAD\",1", results);
+    // This sometimes fails to return anything, we have to retry a few times.
+    count++;
+    delay(5*GRACE_PERIOD);
+  } while (results[0] == F("") && count != POP_SMS_MAX_RETRY);
+
+  if (results[0] == F("OK") || results[0] == F("") || results[0] == F("ERROR")) {
     // No unread SMS
     return 0;
   }
@@ -58,10 +66,6 @@ int Network::sendSMS(const String &dest, const String &msg) const {
 
 int Network::init(String PIN) {
   int ret = 0;
-  if (status == 1) {
-    // Already registered
-    return -1;
-  }
 
   String results[] = {String()};
   results[0].reserve(MAX_SIZE);
@@ -83,8 +87,8 @@ int Network::init(String PIN) {
   const String ccid = results[0];
   Serial.print("SIM ICCID : ");
   Serial.println(ccid);
-  sim808.sendCommand(F("AT+CMGF=1"), results);
 
+  sim808.sendCommand(F("AT+CMGF=1"), results);
 #define interval 5*GRACE_PERIOD
   int timeout = 10*interval;
   String strength;
@@ -103,7 +107,6 @@ int Network::init(String PIN) {
   sim808.sendCommand(F("AT+CREG?"), results);
   if (results[0].endsWith(F("5")) || results[0].endsWith(F("2"))) {
     Serial.println("Registered");
-    status = 1;
   }
   return ret;
 }
