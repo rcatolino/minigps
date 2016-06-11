@@ -13,7 +13,7 @@
 #define DEBUG 1
 
 const int wake_up_on = 2;
-SoftwareSerial SerialLonet(RX_A0, TX_A1); // RX = D14/A0, TX = D15/A1
+SoftwareSerial SerialLonet(RX_A1, TX_A0); // RX = D15/A1, TX = D14/A0
 Sim808 sim808 = Sim808(SerialLonet);
 Network net = Network(sim808);
 GPS gps = GPS(sim808);
@@ -27,7 +27,9 @@ void lo_event() {
 void setup() {
   pinMode(LED, OUTPUT);
   pinMode(LO_INT, INPUT);
-  pinMode(LO_POW_CTL, OUTPUT);
+  pinMode(LO_SLEEP_CTL, OUTPUT);
+  digitalWrite(LO_POWER_SWITCH, LOW);
+  pinMode(LO_POWER_SWITCH, OUTPUT);
   setLoSleep(0);
   Serial.begin(9600);
   Serial.setTimeout(100);
@@ -148,25 +150,39 @@ void handle_notification(State &st) {
   Serial.println("Leave HANDLE NOTIFICATION state");
 }
 
-void sleep_active(State &st) {
-    Serial.println("Enter SLEEP ACTIVE state");
-    Serial.end();
-    // Enable sleep mode on the lonet. Still pulls ~15 mA.
-    setLoSleep(1);
-    // Turn everything off on the mcu until next interrupt/wdt. Draws ~300 uA with raw power
-    LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+void sleep_powerdown(State &st) {
+  Serial.println("Enter SLEEP POWERDOWN state");
+  Serial.end();
+  // Power down the lonet
+  String results[] = {String()};
+  results[0].reserve(MAX_SIZE);
+  sim808.sendCommand(F("AT+CPOWD=1"), results);
+  // Power down the arduino, until next interrupt
+  LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+  loSwitchPower(); // Restart the lonet
+  delay(4*GRACE_PERIOD);
+  st.next = sleep_active;
+}
 
-    if (lo_active > 0) {
-      lo_active = 0;
-      setLoSleep(0);
-      Serial.begin(9600);
-      st.next = handle_notification;
-      delay(2*GRACE_PERIOD);
-    } else {
-//      st.next = sleep_powerdown;
-      st.next = sleep_active;
-    }
-    Serial.println("Leave SLEEP ACTIVE state");
+void sleep_active(State &st) {
+  Serial.println("Enter SLEEP ACTIVE state");
+  Serial.end();
+  // Enable sleep mode on the lonet. Still pulls ~15 mA.
+  setLoSleep(1);
+  // Turn everything off on the mcu until next interrupt/wdt. Draws ~300 uA with raw power
+  LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+
+  if (lo_active > 0) {
+    lo_active = 0;
+    setLoSleep(0);
+    Serial.begin(9600);
+    st.next = handle_notification;
+    delay(2*GRACE_PERIOD);
+  } else {
+    st.next = sleep_powerdown;
+    //st.next = sleep_active;
+  }
+  Serial.println("Leave SLEEP ACTIVE state");
 }
 
 State st = State(handle_notification);

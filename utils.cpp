@@ -3,11 +3,17 @@
 #include "NSoftwareSerial/NSoftwareSerial.h"
 #include "utils.h"
 
+void loSwitchPower() {
+    digitalWrite(LO_POWER_SWITCH, HIGH);
+    delay(2200);
+    digitalWrite(LO_POWER_SWITCH, LOW);
+}
+
 void setLoSleep(int mode) {
   if (mode) {
-    digitalWrite(LO_POW_CTL, HIGH);
+    digitalWrite(LO_SLEEP_CTL, HIGH);
   } else {
-    digitalWrite(LO_POW_CTL, LOW);
+    digitalWrite(LO_SLEEP_CTL, LOW);
   }
 }
 
