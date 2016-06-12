@@ -45,8 +45,18 @@ void Sim808::buildCommand(const String &cmd_part) const {
   link.print(cmd_part);
 }
 
+// Returns -2 if the link is broken, -1 if there is no data available, 0 for an empty line
+// and the number of char read otherwise
 int Sim808::getline(String &result) const {
-  int read = link.available() ? 0 : -1;
+  int read = link.available();
+  if (read == -1) {
+    read = -2;
+  } else if (read == 0) {
+    read = -1;
+  } else {
+    read = 0;
+  }
+  result.remove(0);
   // A result is complete when : we run out of bytes to read, the max size is reached or an end of line is reached
   while (link.available() > 0 && result.length() < MAX_SIZE) {
     char lastchar = (char) link.read();

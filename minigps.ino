@@ -9,7 +9,6 @@
 
 #include <Arduino.h>
 
-const int wake_up_on = 2;
 SoftwareSerial SerialLonet(RX_A1, TX_A0); // RX = D15/A1, TX = D14/A0
 Sim808 sim808 = Sim808(SerialLonet);
 Network net = Network(sim808);
@@ -26,28 +25,24 @@ void setup() {
   pinMode(LO_INT, INPUT);
   pinMode(LO_SLEEP_CTL, OUTPUT);
   setLoSleep(0);
+  powerSave();
   Serial.begin(9600);
   Serial.setTimeout(100);
   Serial.println(F("Serial FTDI setup done"));
   SerialLonet.begin(9600);
   SerialLonet.listen();
 
-  pinMode(LO_POWER_SWITCH, OUTPUT);
-  digitalWrite(LO_POWER_SWITCH, HIGH);
-
   sim808.init();
+  // Create and initialize the network
+  if (net.init(SIM_PIN) != 0) {
+    failure(4, SerialLonet);
+  }
 
   String results[] = {String()};
   results[0].reserve(MAX_SIZE);
   // Get battery stats
   sim808.sendCommand(F("AT+CBC"), results);
   String cbc = results[0];
-
-  // Create and initialize the network
-  if (net.init(SIM_PIN) != 0) {
-    failure(4, SerialLonet);
-  }
-
   net.sendSMS(F(PHONE_NUMBER), "SMS module initialization successful. Battery state = " + cbc);
   attachInterrupt(digitalPinToInterrupt(LO_INT), lo_event, FALLING);
 }
@@ -72,9 +67,6 @@ void cmd_getpos() {
   String gps_data;
   unsigned int fix_attempt = 0;
   digitalWrite(LED, HIGH);
-  if (!gps.getStatus()) {
-    gps.powerOn();
-  }
 
   do {
     gps.getData(gps_data);
@@ -82,9 +74,7 @@ void cmd_getpos() {
       net.sendSMS(F(PHONE_NUMBER), gps_data);
       fix_attempt = MAX_FIX_ATTEMPT+1;
     } else {
-      setLoSleep(1);
       delay(20*GRACE_PERIOD);
-      setLoSleep(0);
       fix_attempt += 1;
     }
   } while (fix_attempt < MAX_FIX_ATTEMPT);
@@ -97,19 +87,21 @@ void discard_line() {
   if (sim808.getline(buffer) == 0) {
     sim808.getline(buffer);
   }
+  Serial.print("Discarding : ");
   Serial.println(buffer);
 }
 
 void handle_notification(State &st) {
   Serial.println("Enter HANDLE NOTIFICATION state");
   String buffer;
-  int received_sms = 0;
+  int sms_to_handle = 0;
   buffer.reserve(MAX_SIZE);
-  while (sim808.getline(buffer) != -1) {
+  while (sim808.getline(buffer) >= 0) {
+    Serial.print("Event received : ");
     Serial.println(buffer);
     if (buffer.startsWith(F("+CMTI"))) {
       // We have a new SMS
-      received_sms = 1;
+      sms_to_handle++;
     } else if (buffer.startsWith(F("+CMT"))) {
       discard_line();
     } else if (buffer.startsWith(F("CBM"))) {
@@ -127,18 +119,20 @@ void handle_notification(State &st) {
   while (net.popSMS(buffer)) {
     Serial.println(buffer);
     if (buffer == "getpos") {
+      gps.powerOn();
       cmd_getpos();
-      received_sms = 0;
+      sms_to_handle--;
     } else if (buffer == "getstat") {
       cmd_getstat();
-      received_sms = 0;
+      sms_to_handle--;
     } else {
       Serial.print("Unkown command : ");
       Serial.println(buffer);
     }
   }
 
-  if (received_sms) {
+  if (sms_to_handle > 0) {
+    // We have received an SMS but couldn't read it with net.popSMS
     failure(8, SerialLonet);
   }
 
@@ -178,7 +172,6 @@ void sleep_active(State &st) {
     st.next = handle_notification;
   } else {
     st.next = sleep_powerdown;
-    //st.next = sleep_active;
   }
   Serial.println("Leave SLEEP ACTIVE state");
 }

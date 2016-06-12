@@ -4,19 +4,24 @@
 
 #include <Arduino.h>
 
-#define LED 13
-#define TX_A0 14
-#define RX_A1 15
-#define LO_POWER_SWITCH 16
-#define LO_SLEEP_CTL 17
-#define LO_INT 2
-#define MAX_SIZE 160
+// Communication PINs
+#define LED 13    // LED pin
+#define TX_A0 14  // Software serial transmit pin
+#define RX_A1 15  // Software serial receive pin
+#define LO_POWER_SWITCH 16 // Power switch pin
+#define LO_SLEEP_CTL 17 // Sleep control pin
+#define LO_INT 2 // Message received interrupt line
+
+// Control constants
+#define MAX_SIZE 160    // Max serial line size
 #define GRACE_PERIOD 200
-#define MAX_FIX_ATTEMPT 5
-#define TIME_POWD 2
-#define TIME_ACTIVE 2
+#define MAX_FIX_ATTEMPT 5 // Number of attempt before giving up on GNSS
+#define TIME_POWD 20      // Time to wait in power down state (multiple of 8s)
+#define TIME_ACTIVE 10    // Time to wait in sleep state (multiple of 8s)
+#define SERIAL_TIMEOUT 10 // Time to wait an answer of the lonet module (multiple of GRACE_PERIOD)
 #define SIM_PIN F("1234")
 
+void powerSave();
 void sleep(const unsigned int units);
 void loSwitchPower();
 void setLoSleep(int mode);

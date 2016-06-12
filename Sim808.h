@@ -23,7 +23,13 @@ class Sim808 {
       }
 
       int ret = 0;
-      delay(5*GRACE_PERIOD); // Make sure the sim module has time to answer
+      int timeout = 0;
+      while (link.available() == 0 && timeout < SERIAL_TIMEOUT) {
+        delay(GRACE_PERIOD); // Wait for data
+        timeout++;
+      }
+      Serial.print(link.available());
+      Serial.println(" char available on serial line");
       do {
         if (ret >= N) {
           while (link.available() > 0) {
@@ -31,7 +37,6 @@ class Sim808 {
           }
         } else {
           String &result = results[ret];
-          result.remove(0);
           getline(result);
 
           if (result.length() == 0) {
@@ -46,6 +51,7 @@ class Sim808 {
             ret++;
           }
         }
+        delay(2*GRACE_PERIOD);
       } while(link.available() > 0);
 
       return ret;
@@ -61,8 +67,8 @@ class Sim808 {
 
     int getline(String &result) const;
 
-  private:
     SoftwareSerial &link;
+  private:
 
 };
 

@@ -63,6 +63,7 @@ int GPS::getData(String &data) const {
   sim808.sendCommand("AT+CGNSINF", results);
 
   if (results[0].length() <= 14) {
+    Serial.println(results[0]);
     Serial.println("Error, CGNSINF answer is too short to be valid");
     return -1;
   }

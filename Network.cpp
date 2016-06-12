@@ -28,9 +28,9 @@ int Network::popSMS(String &sms_txt) const {
   int coma = results[0].indexOf(',');
   String idx = results[0].substring(0, coma);
   Serial.println("New SMS at index : " + idx);
-  // Mark the SMS as read
+  // Delete the SMS
   String discard[] = {String()};
-  sim808.sendCommand("AT+CMGR="+idx, discard);
+  sim808.sendCommand("AT+CMGD="+idx, discard);
   return 1;
 }
 
@@ -76,7 +76,8 @@ int Network::init(String PIN) {
     Serial.print("Inserting PIN ");
     Serial.println(PIN);
     sim808.sendCommand("AT+CPIN=" + PIN, results);
-    if (results[0] != "OK") {
+    sim808.sendCommand(F("AT+CPIN?"), results);
+    if (!results[0].endsWith(F("READY"))) {
       return 1;
     }
   } else {

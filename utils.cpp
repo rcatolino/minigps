@@ -1,9 +1,15 @@
 // Copyright (C) 2016 raphael.catolino@gmail.com
 #include <Arduino.h>
 #include <LowPower.h>
+#include <avr/power.h>
 #include <limits.h>
 #include "NSoftwareSerial/NSoftwareSerial.h"
 #include "utils.h"
+
+void powerSave() {
+  power_spi_disable();
+  power_twi_disable();
+}
 
 void sleep(const unsigned int units) {
   // units are multiples of 8s
@@ -16,9 +22,11 @@ void sleep(const unsigned int units) {
 }
 
 void loSwitchPower() {
+    pinMode(LO_POWER_SWITCH, OUTPUT);
     digitalWrite(LO_POWER_SWITCH, LOW);
-    delay(2200);
+    delay(2500);
     digitalWrite(LO_POWER_SWITCH, HIGH);
+    pinMode(LO_POWER_SWITCH, INPUT);
 }
 
 void setLoSleep(int mode) {
