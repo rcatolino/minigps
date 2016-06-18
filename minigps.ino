@@ -1,4 +1,5 @@
 // Copyright (C) 2016 raphael.catolino@gmail.com
+#include "ByteBuffer.h"
 #include "GPS.h"
 #include "Network.h"
 #include "phonenumber.h"
@@ -21,6 +22,7 @@ void lo_event() {
 }
 
 void setup() {
+  auto test = ByteBuffer<4>();
   pinMode(LED, OUTPUT);
   pinMode(LO_INT, INPUT);
   pinMode(LO_SLEEP_CTL, OUTPUT);
