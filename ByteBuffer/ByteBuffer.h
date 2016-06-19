@@ -24,14 +24,15 @@ class ByteBuffer {
       len = other.len;
     }
 
-    bool push(const ByteBuffer &piece) {
-      if (piece.len + len > buffer_size) {
+    template <size_t n>
+    bool push(const ByteBuffer<n> &piece) {
+      if (piece.length() + len > buffer_size) {
         return false;
       }
 
-      memcpy(buffer+len, piece.buffer, piece.len);
-      buffer[len + piece.len] = '\0';
-      len += piece.len;
+      memcpy(buffer+len, piece.c_str(), piece.length());
+      buffer[len + piece.length()] = '\0';
+      len += piece.length();
       return true;
     }
 
@@ -63,7 +64,7 @@ class ByteBuffer {
     bool push(const char (&piece)[n]) {
       size_t plen = n - 1;
       if (len + plen > buffer_size) {
-        printf("current length : %d, buffer size : %d, piece length %d\n", len, buffer_size, plen);
+        //printf("current length : %d, buffer size : %d, piece length %d\n", len, buffer_size, plen);
         return false;
       }
 
@@ -73,19 +74,34 @@ class ByteBuffer {
       return true;
     }
 
-    size_t maxSize() {
+    size_t maxSize() const {
       return buffer_size;
     }
 
-    size_t length() {
+    size_t length() const {
       return len;
     }
 
-    bool operator==(ByteBuffer &other) {
+    template <typename T>
+    bool operator==(const T &other) {
+      return equals(other);
+    }
+
+    template <typename T>
+    bool operator!=(const T &other) {
+      return !equals(other);
+    }
+
+    bool equals(const ByteBuffer &other) {
       return (strcmp(buffer, other.buffer) == 0);
     }
 
-    bool startsWith(ByteBuffer &prefix) {
+    template <size_t n>
+    bool equals(const char (&other)[n]) {
+      return (strcmp(buffer, other) == 0);
+    }
+
+    bool startsWith(const ByteBuffer &prefix) const {
       if (prefix.len > len) {
         return false;
       }
@@ -93,7 +109,7 @@ class ByteBuffer {
       return (strncmp(buffer, prefix.buffer, prefix.len) == 0);
     }
 
-    bool endsWith(ByteBuffer &suffix) {
+    bool endsWith(const ByteBuffer &suffix) const {
       if (suffix.len > len) {
         return false;
       }
@@ -101,14 +117,14 @@ class ByteBuffer {
       return (strncmp(buffer+len-suffix.len, suffix.buffer, suffix.len) == 0);
     }
 
-    bool concat(ByteBuffer &stuff) {
+    bool concat(const ByteBuffer &stuff) {
       if (push(stuff) == -1) {
         return false;
       }
       return true;
     }
 
-    const char *c_str() {
+    const char *c_str() const {
       return (char*) buffer;
     }
 
