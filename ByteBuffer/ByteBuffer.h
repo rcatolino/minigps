@@ -101,6 +101,15 @@ class ByteBuffer {
       return (strcmp(buffer, other) == 0);
     }
 
+    template <size_t n>
+    bool startsWith(const char (&prefix)[n]) const {
+      if (n-1 > len) {
+        return false;
+      }
+
+      return (strncmp(buffer, prefix, n-1) == 0);
+    }
+
     bool startsWith(const ByteBuffer &prefix) const {
       if (prefix.len > len) {
         return false;
@@ -126,6 +135,15 @@ class ByteBuffer {
 
     const char *c_str() const {
       return (char*) buffer;
+    }
+
+    void remove(size_t index = 0) {
+      if (index >= len) {
+        return;
+      }
+
+      buffer[index] = '\0';
+      len = index;
     }
 
   private:

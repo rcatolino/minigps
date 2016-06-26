@@ -1,5 +1,6 @@
 // Copyright (C) 2016 raphael.catolino@gmail.com
 #include <Arduino.h>
+#include "ByteBuffer/ByteBuffer.h"
 #include "NSoftwareSerial/NSoftwareSerial.h"
 #include "Sim808.h"
 #include "utils.h"
@@ -41,13 +42,11 @@ int Sim808::waitData(int timeout) const {
   return -1;
 }
 
-void Sim808::buildCommand(const String &cmd_part) const {
+void Sim808::buildCommand(const String& cmd_part) const {
   link.print(cmd_part);
 }
 
-// Returns -2 if the link is broken, -1 if there is no data available, 0 for an empty line
-// and the number of char read otherwise
-int Sim808::getline(String &result) const {
+int Sim808::getline(String& result) const {
   int read = link.available();
   if (read == -1) {
     read = -2;

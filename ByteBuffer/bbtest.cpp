@@ -86,7 +86,7 @@ void test_equality() {
   printf("test_equality ok\n");
 }
 
-int main(int argc, char *argv[]) {
+int main_test(int,  char *[]) {
   test_char_array_constructor();
   test_copy_constructor();
   test_push_char();

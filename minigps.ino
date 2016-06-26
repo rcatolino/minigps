@@ -1,5 +1,5 @@
 // Copyright (C) 2016 raphael.catolino@gmail.com
-#include "ByteBuffer.h"
+#include "ByteBuffer/ByteBuffer.h"
 #include "GPS.h"
 #include "Network.h"
 #include "phonenumber.h"
@@ -22,7 +22,6 @@ void lo_event() {
 }
 
 void setup() {
-  auto test = ByteBuffer<4>();
   pinMode(LED, OUTPUT);
   pinMode(LO_INT, INPUT);
   pinMode(LO_SLEEP_CTL, OUTPUT);
@@ -40,12 +39,9 @@ void setup() {
     failure(4, SerialLonet);
   }
 
-  String results[] = {String()};
-  results[0].reserve(MAX_SIZE);
-  // Get battery stats
-  sim808.sendCommand(F("AT+CBC"), results);
-  String cbc = results[0];
-  net.sendSMS(F(PHONE_NUMBER), "SMS module initialization successful. Battery state = " + cbc);
+  ByteBuffer<MAX_SIZE> cbc;
+  sim808.sendCommand(F("AT+CBC"), cbc);
+  net.sendSMS(F(PHONE_NUMBER), "SMS module initialization successful. Battery state = " + String(cbc.c_str()));
   attachInterrupt(digitalPinToInterrupt(LO_INT), lo_event, FALLING);
 }
 
