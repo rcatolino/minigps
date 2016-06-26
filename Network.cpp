@@ -4,7 +4,6 @@
 #include "Sim808.h"
 #include "utils.h"
 
-#define POP_SMS_MAX_RETRY 3
 int Network::popSMS(String &sms_txt) const {
   unsigned int count = 0;
   String results[] = {String(), String()};

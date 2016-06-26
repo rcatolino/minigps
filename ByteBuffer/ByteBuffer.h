@@ -152,6 +152,14 @@ class ByteBuffer {
       len = index;
     }
 
+    size_t indexOf(char c, size_t from = 0) {
+      char* pos = strchr(buffer + from, c);
+      if (pos == NULL) {
+        return -1;
+      }
+      return (size_t)(pos - buffer);
+    }
+
     ByteBuffer<N> substring(size_t left, size_t right=N) const {
       if (left > right) {
         auto temp = right;

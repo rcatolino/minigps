@@ -85,32 +85,30 @@ void cmd_getpos() {
 }
 
 void discard_line() {
-  String buffer;
-  buffer.reserve(MAX_SIZE);
+  ByteBuffer<MAX_SIZE> buffer;
   if (sim808.getline(buffer) == 0) {
     sim808.getline(buffer);
   }
   Serial.print("Discarding : ");
-  Serial.println(buffer);
+  Serial.println(buffer.c_str());
 }
 
 void handle_notification(State &st) {
   Serial.println("Enter HANDLE NOTIFICATION state");
-  String buffer;
+  ByteBuffer<MAX_SIZE> buffer;
   int sms_to_handle = 0;
-  buffer.reserve(MAX_SIZE);
   while (sim808.getline(buffer) >= 0) {
     Serial.print("Event received : ");
-    Serial.println(buffer);
-    if (buffer.startsWith(F("+CMTI"))) {
+    Serial.println(buffer.c_str());
+    if (buffer.startsWith("+CMTI")) {
       // We have a new SMS
       sms_to_handle++;
-    } else if (buffer.startsWith(F("+CMT"))) {
+    } else if (buffer.startsWith("+CMT")) {
       discard_line();
-    } else if (buffer.startsWith(F("CBM"))) {
+    } else if (buffer.startsWith("CBM")) {
       // Ignore cell broadcasts
       discard_line();
-    } else if (buffer.startsWith(F("CDS"))) {
+    } else if (buffer.startsWith("CDS")) {
       // SMS Status Report
       // TODO: verify the SMS status and try to resend it if failed
       discard_line();
@@ -120,7 +118,7 @@ void handle_notification(State &st) {
   }
 
   while (net.popSMS(buffer)) {
-    Serial.println(buffer);
+    Serial.println(buffer.c_str());
     if (buffer == "getpos") {
       gps.powerOn();
       cmd_getpos();
@@ -130,7 +128,7 @@ void handle_notification(State &st) {
       sms_to_handle--;
     } else {
       Serial.print("Unkown command : ");
-      Serial.println(buffer);
+      Serial.println(buffer.c_str());
     }
   }
 
@@ -146,12 +144,11 @@ void handle_notification(State &st) {
 void sleep_powerdown(State &st) {
   Serial.println("Enter SLEEP POWERDOWN state");
   // Power down the lonet
-  String results[] = {String()};
-  results[0].reserve(MAX_SIZE);
+  ByteBuffer<MAX_SIZE> result;
   do {
-    sim808.sendCommand(F("AT+CPOWD=1"), results);
+    sim808.sendCommand(F("AT+CPOWD=1"), result);
     delay(10*GRACE_PERIOD);
-  } while (results[0] != "NORMAL POWER DOWN");
+  } while (result != "NORMAL POWER DOWN");
   // Power down the arduino, until TIME_POWD has run out
   sleep(TIME_POWD);
   loSwitchPower(); // Restart the lonet
