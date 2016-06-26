@@ -24,6 +24,13 @@ class ByteBuffer {
       len = other.len;
     }
 
+    ByteBuffer<N>& operator=(const ByteBuffer<N>& other) {
+      memcpy(buffer, other.buffer, other.len);
+      buffer[other.len] = '\0';
+      len = other.len;
+      return *this;
+    }
+
     template <size_t n>
     bool push(const ByteBuffer<n> &piece) {
       if (piece.length() + len > buffer_size) {
@@ -64,7 +71,6 @@ class ByteBuffer {
     bool push(const char (&piece)[n]) {
       size_t plen = n - 1;
       if (len + plen > buffer_size) {
-        //printf("current length : %d, buffer size : %d, piece length %d\n", len, buffer_size, plen);
         return false;
       }
 
@@ -144,6 +150,28 @@ class ByteBuffer {
 
       buffer[index] = '\0';
       len = index;
+    }
+
+    ByteBuffer<N> substring(size_t left, size_t right=N) const {
+      if (left > right) {
+        auto temp = right;
+        right = left;
+        left = temp;
+      }
+
+      if (left >= len) {
+        return ByteBuffer<N>();
+      }
+
+      if (right > len) {
+        right = len;
+      }
+
+      ByteBuffer<N> sub;
+      memcpy(sub.buffer, buffer+left, right-left);
+      sub.buffer[right-left] = '\0';
+      sub.len = right-left;
+      return sub;
     }
 
   private:

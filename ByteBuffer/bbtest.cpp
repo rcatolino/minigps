@@ -86,13 +86,42 @@ void test_equality() {
   printf("test_equality ok\n");
 }
 
-int main_test(int,  char *[]) {
+void test_remove() {
+  auto a = makebb("test");
+  a.remove(5);
+  assert(a == "test");
+  a.remove(4);
+  assert(a == "test");
+  a.remove(3);
+  assert(a == "tes");
+  a.remove(0);
+  assert(a == "");
+  printf("test_remove ok\n");
+}
+
+void test_substring() {
+  auto a = makebb("testtest");
+  assert(a.substring(0) == "testtest");
+  assert(a.substring(0, 20) == "testtest");
+  assert(a.substring(0, 8) == "testtest");
+  assert(a.substring(0, 7) == "testtes");
+  assert(a.substring(7, 0) == "testtes");
+  assert(a.substring(2) == "sttest");
+  assert(a.substring(2,2) == "");
+  assert(a.substring(2,4) == "st");
+  assert(a.substring(2,20) == "sttest");
+  printf("test_substring ok\n");
+}
+
+int test_main(int,  char *[]) {
   test_char_array_constructor();
   test_copy_constructor();
   test_push_char();
   test_push_char_star();
   test_push_byte_buffer();
   test_equality();
+  test_remove();
+  test_substring();
   printf("All test OK\n");
   return 0;
 }

@@ -41,7 +41,10 @@ void setup() {
 
   ByteBuffer<MAX_SIZE> cbc;
   sim808.sendCommand(F("AT+CBC"), cbc);
-  net.sendSMS(F(PHONE_NUMBER), "SMS module initialization successful. Battery state = " + String(cbc.c_str()));
+  ByteBuffer<MAX_SIZE> sms;
+  sms.push("SMS module initialization successful. Battery state = ");
+  sms.push(cbc);
+  net.sendSMS(F(PHONE_NUMBER), sms);
   attachInterrupt(digitalPinToInterrupt(LO_INT), lo_event, FALLING);
 }
 
@@ -52,17 +55,19 @@ void serialEvent() {
 }
 
 void cmd_getstat() {
-  String battery[] = {String()};
-  String net_signal[] = {String()};
+  ByteBuffer<MAX_SIZE> battery;
+  ByteBuffer<MAX_SIZE> net_signal;
   digitalWrite(LED, HIGH);
   sim808.sendCommand(F("AT+CBC"), battery);
   sim808.sendCommand(F("AT+CSQ"), net_signal);
-  net.sendSMS(F(PHONE_NUMBER), battery[0] + ", " + net_signal[0]);
+  battery.push(", ");
+  battery.push(net_signal);
+  net.sendSMS(F(PHONE_NUMBER), battery);
   digitalWrite(LED, LOW);
 }
 
 void cmd_getpos() {
-  String gps_data;
+  ByteBuffer<MAX_SIZE> gps_data;
   unsigned int fix_attempt = 0;
   digitalWrite(LED, HIGH);
 
