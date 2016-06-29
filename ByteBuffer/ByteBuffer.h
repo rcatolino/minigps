@@ -124,6 +124,16 @@ class ByteBuffer {
       return (strncmp(buffer, prefix.buffer, prefix.len) == 0);
     }
 
+    template <size_t n>
+    bool endsWith(const char (&suffix)[n]) const {
+      auto slen = n-1;
+      if (slen > len) {
+        return false;
+      }
+
+      return (strncmp(buffer+len-slen, suffix, slen) == 0);
+    }
+
     bool endsWith(const ByteBuffer &suffix) const {
       if (suffix.len > len) {
         return false;

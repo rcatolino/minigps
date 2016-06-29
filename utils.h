@@ -19,7 +19,7 @@
 #define TIME_POWD 20      // Time to wait in power down state (multiple of 8s)
 #define TIME_ACTIVE 10    // Time to wait in sleep state (multiple of 8s)
 #define SERIAL_TIMEOUT 10 // Time to wait an answer of the lonet module (multiple of GRACE_PERIOD)
-#define SIM_PIN F("1234")
+#define SIM_PIN "1234"
 
 void powerSave();
 void sleep(const unsigned int units);

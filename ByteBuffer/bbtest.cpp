@@ -86,6 +86,29 @@ void test_equality() {
   printf("test_equality ok\n");
 }
 
+void test_startswith() {
+  auto a = makebb("testatest");
+  assert(a.startsWith("test"));
+  assert(a.startsWith("testa"));
+  assert(a.startsWith("testatest"));
+  assert(!a.startsWith("nottest"));
+  assert(!a.startsWith("testb"));
+  assert(!a.startsWith("testatestb"));
+  printf("test_startswith ok\n");
+}
+
+void test_endswith() {
+  auto a = makebb("testatest");
+  assert(a.endsWith("test"));
+  assert(a.endsWith("atest"));
+  assert(a.endsWith("testatest"));
+  assert(!a.endsWith("nottest"));
+  assert(!a.endsWith("btest"));
+  assert(!a.endsWith("btestatest"));
+  assert(!a.endsWith("testatestb"));
+  printf("test_endswith ok\n");
+}
+
 void test_remove() {
   auto a = makebb("test");
   a.remove(5);
@@ -122,6 +145,8 @@ int test_main(int,  char *[]) {
   test_equality();
   test_remove();
   test_substring();
+  test_startswith();
+  test_endswith();
   printf("All test OK\n");
   return 0;
 }

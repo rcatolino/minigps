@@ -13,7 +13,15 @@ class Sim808 {
 
     void init();
 
-    void buildCommand(const String &cmd_part) const;
+    template <typename T>
+    void buildCommand(const T& cmd_part) const {
+      link.print(cmd_part);
+    }
+    template <size_t n>
+    void buildCommand(const ByteBuffer<n>& cmd_part) const {
+      link.print(cmd_part.c_str());
+    }
+
 
     int waitData(int timeout) const;
 
@@ -131,6 +139,14 @@ class Sim808 {
       } while(link.available() > 0);
 
       return ret;
+    }
+
+    template<size_t n, typename... Buffers>
+    int sendCommand(const ByteBuffer<n>& cmd, Buffers... bs) const {
+      link.println(cmd.c_str());
+      Serial.print(F("Sending command : "));
+      Serial.println(cmd.c_str());
+      return getResults(bs...);
     }
 
     template<typename... Buffers>
