@@ -10,7 +10,9 @@ template <size_t N>
 class ByteBuffer {
   public:
 
-    ByteBuffer() : buffer_size(N) {}
+    ByteBuffer() : buffer_size(N) {
+      buffer[0] = '\0';
+    }
 
     ByteBuffer(const char (&other)[N+1]) : buffer_size(N) {
       memcpy(buffer, other, N);

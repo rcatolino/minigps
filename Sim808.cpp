@@ -17,6 +17,8 @@ void Sim808::init() {
       count = 0;
     }
     sendCommand("AT", result);
+    Serial.print(F("AT result: "));
+    Serial.println(result.c_str());
     delay(3000);
     count++;
   } while (result != "OK");

@@ -42,6 +42,8 @@ void ok(const ByteBuffer<n>& result) {
   Serial.println(result.c_str());
 }
 
+void printMemStats();
+
 void nothing();
 
 #endif // utils_H

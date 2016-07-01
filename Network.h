@@ -18,9 +18,9 @@ class Network {
       ByteBuffer<MAX_SIZE> result;
       sim808.sendCommand("AT+CPIN?", result);
       if (result.endsWith("READY")) {
-        Serial.println("SIM card inserted");
+        Serial.println(F("SIM card inserted"));
       } else if (result.endsWith("SIM PIN")) {
-        Serial.print("Inserting PIN ");
+        Serial.print(F("Inserting PIN "));
         Serial.println(PIN);
         ByteBuffer<MAX_SIZE> cmd;
         cmd.push("AT+CPIN=");
@@ -35,7 +35,7 @@ class Network {
       }
 
       sim808.sendCommand("AT+CCID", result);
-      Serial.print("SIM ICCID : ");
+      Serial.print(F("SIM ICCID : "));
       Serial.println(result.c_str());
 
       sim808.sendCommand("AT+CMGF=1");
@@ -50,13 +50,13 @@ class Network {
       } while (timeout > 0 && (strength.startsWith("0") || strength.startsWith("99")));
 
       if (timeout <= 0) {
-        Serial.print("Warning, no signal.");
+        Serial.print(F("Warning, no signal."));
         ret = 3;
       }
 
       sim808.sendCommand("AT+CREG?", result);
       if (result.endsWith("5") || result.endsWith("2")) {
-        Serial.println("Registered");
+        Serial.println(F("Registered"));
       }
 
       return ret;
@@ -77,7 +77,7 @@ class Network {
       sim808.getResults(result, status);
       // We only get sending result when the network acknowledges us
       if (sim808.waitData(10000) != 0) {
-        Serial.println("Error, no answer from network");
+        Serial.println(F("Error, no answer from network"));
       }
 
       sim808.getResults(result, status);
@@ -105,7 +105,7 @@ class Network {
       }
 
       auto idx = status.substring(6, status.indexOf(','));
-      Serial.print("New SMS at index : ");
+      Serial.print(F("New SMS at index : "));
       Serial.println(idx.c_str());
       // Delete the SMS
       ByteBuffer<20> deletecmd;

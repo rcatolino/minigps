@@ -30,6 +30,7 @@ void setup() {
   Serial.begin(9600);
   Serial.setTimeout(100);
   Serial.println(F("Serial FTDI setup done"));
+  printMemStats();
   SerialLonet.begin(9600);
   SerialLonet.listen();
 
@@ -89,16 +90,16 @@ void discard_line() {
   if (sim808.getline(buffer) == 0) {
     sim808.getline(buffer);
   }
-  Serial.print("Discarding : ");
+  Serial.print(F("Discarding : "));
   Serial.println(buffer.c_str());
 }
 
 void handle_notification(State &st) {
-  Serial.println("Enter HANDLE NOTIFICATION state");
+  Serial.println(F("Enter HANDLE NOTIFICATION state"));
   ByteBuffer<MAX_SIZE> buffer;
   int sms_to_handle = 0;
   while (sim808.getline(buffer) >= 0) {
-    Serial.print("Event received : ");
+    Serial.print(F("Event received : "));
     Serial.println(buffer.c_str());
     if (buffer.startsWith("+CMTI")) {
       // We have a new SMS
@@ -127,7 +128,7 @@ void handle_notification(State &st) {
       cmd_getstat();
       sms_to_handle--;
     } else {
-      Serial.print("Unkown command : ");
+      Serial.print(F("Unkown command : "));
       Serial.println(buffer.c_str());
     }
   }
@@ -138,11 +139,11 @@ void handle_notification(State &st) {
   }
 
   st.next = sleep_active;
-  Serial.println("Leave HANDLE NOTIFICATION state");
+  Serial.println(F("Leave HANDLE NOTIFICATION state"));
 }
 
 void sleep_powerdown(State &st) {
-  Serial.println("Enter SLEEP POWERDOWN state");
+  Serial.println(F("Enter SLEEP POWERDOWN state"));
   // Power down the lonet
   ByteBuffer<MAX_SIZE> result;
   do {
@@ -155,11 +156,11 @@ void sleep_powerdown(State &st) {
   sim808.init();
   net.init(SIM_PIN);
   st.next = sleep_active;
-  Serial.println("Leave SLEEP POWERDOWN state");
+  Serial.println(F("Leave SLEEP POWERDOWN state"));
 }
 
 void sleep_active(State &st) {
-  Serial.println("Enter SLEEP ACTIVE state");
+  Serial.println(F("Enter SLEEP ACTIVE state"));
   // Enable sleep mode on the lonet. Still pulls ~15 mA.
   setLoSleep(1);
   // Turn everything off on the mcu until next interrupt or until TIME_ACTIVE has run out
@@ -173,7 +174,7 @@ void sleep_active(State &st) {
   } else {
     st.next = sleep_powerdown;
   }
-  Serial.println("Leave SLEEP ACTIVE state");
+  Serial.println(F("Leave SLEEP ACTIVE state"));
 }
 
 State st = State(handle_notification);

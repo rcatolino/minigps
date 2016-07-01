@@ -58,6 +58,8 @@ class Sim808 {
     int getResult(int nb_line_kept) const {
       // Base case
       // There's no more buffers to fill, just print out the rest of the answer
+      //Serial.print(F("in getResult final "));
+      //printMemStats();
       while (link.available() > 0) {
         Serial.write(link.read());
       }
@@ -66,12 +68,14 @@ class Sim808 {
     }
 
     template<size_t n, typename... Buffers>
-    int getResult(int nb_line_kept, ByteBuffer<n>& buff, Buffers... bs) const {
+    int getResult(int nb_line_kept, ByteBuffer<n>& buff, Buffers&... bs) const {
       // Recursion case
       // Fill in this buffer and move on to the next
+      //Serial.print(F("in getResult recursive "));
+      //printMemStats();
       buff.remove();
       while (link.available() > 0 && buff.length() == 0) {
-        getline(buff);
+        while (getline(buff) == 0) {}
         if (buff.startsWith("AT")) {
           Serial.print(F("Not keeping : "));
           Serial.println(buff.c_str());
@@ -79,7 +83,8 @@ class Sim808 {
         } else {
           nb_line_kept++;
           Serial.print(F("Keeping line nb "));
-          Serial.println(String(nb_line_kept));
+          Serial.print(nb_line_kept);
+          Serial.print(F(" : "));
           Serial.println(buff.c_str());
         }
         delay(2*GRACE_PERIOD);
@@ -89,19 +94,21 @@ class Sim808 {
     }
 
     template<typename... Buffers>
-    int getResults(Buffers... bs) const {
+    int getResults(Buffers&... bs) const {
+      //Serial.print(F("in getResults "));
+      //printMemStats();
       int timeout = 0;
       while (link.available() == 0 && timeout < SERIAL_TIMEOUT) {
         delay(GRACE_PERIOD); // Wait for data
         timeout++;
       }
       Serial.print(link.available());
-      Serial.println(" char available on serial line");
+      Serial.println(F(" char available on serial line"));
       return getResult(0, bs...);
     }
 
     template<size_t n, typename... Buffers>
-    int sendCommand(const ByteBuffer<n>& cmd, Buffers... bs) const {
+    int sendCommand(const ByteBuffer<n>& cmd, Buffers&... bs) const {
       link.println(cmd.c_str());
       Serial.print(F("Sending command : "));
       Serial.println(cmd.c_str());
@@ -109,7 +116,9 @@ class Sim808 {
     }
 
     template<size_t n, typename... Buffers>
-    int sendCommand(const char (&cmd)[n], Buffers... bs) const {
+    int sendCommand(const char (&cmd)[n], Buffers&... bs) const {
+      //Serial.print(F("in sendCommand "));
+      //printMemStats();
       link.println(cmd);
       Serial.print(F("Sending command : "));
       Serial.println(cmd);

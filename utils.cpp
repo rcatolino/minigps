@@ -57,7 +57,7 @@ void serialPipe(SoftwareSerial &dst) {
 void failure(int code, SoftwareSerial &dst) {
   Serial.print(F("FAIL, CODE "));
   Serial.println(code);
-  Serial.println("Waiting for input");
+  Serial.println(F("Waiting for input"));
   int c = 0;
   while (true) {
     delay(100);
@@ -77,4 +77,14 @@ void nothing() {
   Serial.println(F("No answer"));
 }
 
+void printMemStats() {
+  extern int __heap_start, *__brkval;
+  int stack;
+  int heap = __brkval == 0 ? (int) &__heap_start : (int) __brkval;
+
+  Serial.print(F("Free ram "));
+  Serial.print(heap);
+  Serial.print(" ");
+  Serial.println((int)&stack);
+}
 
