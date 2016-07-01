@@ -40,7 +40,7 @@ void setup() {
   }
 
   ByteBuffer<MAX_SIZE> cbc;
-  sim808.sendCommand(F("AT+CBC"), cbc);
+  sim808.sendCommand("AT+CBC", cbc);
   ByteBuffer<MAX_SIZE> sms;
   sms.push("SMS module initialization successful. Battery state = ");
   sms.push(cbc);
@@ -58,8 +58,8 @@ void cmd_getstat() {
   ByteBuffer<MAX_SIZE> battery;
   ByteBuffer<MAX_SIZE> net_signal;
   digitalWrite(LED, HIGH);
-  sim808.sendCommand(F("AT+CBC"), battery);
-  sim808.sendCommand(F("AT+CSQ"), net_signal);
+  sim808.sendCommand("AT+CBC", battery);
+  sim808.sendCommand("AT+CSQ", net_signal);
   battery.push(", ");
   battery.push(net_signal);
   net.sendSMS(F(PHONE_NUMBER), battery);
@@ -146,7 +146,7 @@ void sleep_powerdown(State &st) {
   // Power down the lonet
   ByteBuffer<MAX_SIZE> result;
   do {
-    sim808.sendCommand(F("AT+CPOWD=1"), result);
+    sim808.sendCommand("AT+CPOWD=1", result);
     delay(10*GRACE_PERIOD);
   } while (result != "NORMAL POWER DOWN");
   // Power down the arduino, until TIME_POWD has run out

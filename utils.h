@@ -3,6 +3,7 @@
 #define utils_H
 
 #include <Arduino.h>
+#include "ByteBuffer/ByteBuffer.h"
 
 // Communication PINs
 #define LED 13    // LED pin
@@ -28,8 +29,19 @@ void setLoSleep(int mode);
 void switchLed(int length);
 void serialPipe(SoftwareSerial &dst);
 void failure(int code, SoftwareSerial &dst);
-void error(const String& result);
-void ok(const String& result);
+
+template <size_t n>
+void error(const ByteBuffer<n>& result) {
+  Serial.print(F("ERROR : "));
+  Serial.println(result.c_str());
+}
+
+template <size_t n>
+void ok(const ByteBuffer<n>& result) {
+  Serial.print(F("Command result : "));
+  Serial.println(result.c_str());
+}
+
 void nothing();
 
 #endif // utils_H

@@ -73,16 +73,6 @@ void failure(int code, SoftwareSerial &dst) {
   }
 }
 
-void error(const String& result) {
-  Serial.print(F("ERROR : "));
-  Serial.println(result);
-}
-
-void ok(const String& result) {
-  Serial.print(F("Command result : "));
-  Serial.println(result);
-}
-
 void nothing() {
   Serial.println(F("No answer"));
 }

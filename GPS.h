@@ -16,7 +16,7 @@ class GPS {
     int powerOff() const;
     template <size_t n>
     int getData(ByteBuffer<n>& data) const {
-      sim808.sendCommand(F("AT+CGNSINF"), data);
+      sim808.sendCommand("AT+CGNSINF", data);
 
       if (data.length() <= 14) {
         Serial.println(data.c_str());
@@ -32,8 +32,6 @@ class GPS {
       data = data.substring(10);
       return 0;
     }
-
-    int getData(String& data) const;
 
   private:
     const Sim808 &sim808;

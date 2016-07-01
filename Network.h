@@ -16,7 +16,7 @@ class Network {
       int ret = 0;
 
       ByteBuffer<MAX_SIZE> result;
-      sim808.sendCommand(F("AT+CPIN?"), result);
+      sim808.sendCommand("AT+CPIN?", result);
       if (result.endsWith("READY")) {
         Serial.println("SIM card inserted");
       } else if (result.endsWith("SIM PIN")) {
@@ -26,7 +26,7 @@ class Network {
         cmd.push("AT+CPIN=");
         cmd.push(PIN);
         sim808.sendCommand(cmd);
-        sim808.sendCommand(F("AT+CPIN?"), result);
+        sim808.sendCommand("AT+CPIN?", result);
         if (!result.endsWith("READY")) {
           return 1;
         }
@@ -34,16 +34,16 @@ class Network {
         return 2;
       }
 
-      sim808.sendCommand(F("AT+CCID"), result);
+      sim808.sendCommand("AT+CCID", result);
       Serial.print("SIM ICCID : ");
       Serial.println(result.c_str());
 
-      sim808.sendCommand(F("AT+CMGF=1"));
+      sim808.sendCommand("AT+CMGF=1");
 #define interval 5*GRACE_PERIOD
       int timeout = 10*interval;
       ByteBuffer<MAX_SIZE> strength;
       do {
-        sim808.sendCommand(F("AT+CSQ"), result);
+        sim808.sendCommand("AT+CSQ", result);
         strength = result.substring(6);
         delay(interval);
         timeout -= interval;
@@ -54,7 +54,7 @@ class Network {
         ret = 3;
       }
 
-      sim808.sendCommand(F("AT+CREG?"), result);
+      sim808.sendCommand("AT+CREG?", result);
       if (result.endsWith("5") || result.endsWith("2")) {
         Serial.println("Registered");
       }
@@ -111,7 +111,7 @@ class Network {
       ByteBuffer<20> deletecmd;
       deletecmd.push("AT+CMGD=");
       deletecmd.push(idx);
-      sim808.sendCommand(deletecmd.c_str());
+      sim808.sendCommand(deletecmd);
       return 1;
     }
 
