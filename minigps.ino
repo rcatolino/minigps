@@ -127,9 +127,30 @@ void handle_notification(State &st) {
     } else if (buffer == "getstat") {
       cmd_getstat();
       sms_to_handle--;
+    } else if (buffer == "debug") {
+      while (true) {
+        while (Serial.available()) {
+          auto c = Serial.read();
+          if (c == 's') {
+            Serial.write(c);
+            setLoSleep(1);
+          } else if (c == 'w') {
+            Serial.write(c);
+            setLoSleep(0);
+          } else {
+            SerialLonet.write(c);
+          }
+        }
+
+        delay(GRACE_PERIOD);
+        while (SerialLonet.available()) {
+          Serial.write(SerialLonet.read());
+        }
+      }
     } else {
       Serial.print(F("Unkown command : "));
       Serial.println(buffer.c_str());
+      net.sendSMS(F(PHONE_NUMBER), buffer);
     }
   }
 

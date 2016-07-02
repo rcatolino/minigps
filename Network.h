@@ -6,6 +6,7 @@
 #include "Sim808.h"
 
 #define POP_SMS_MAX_RETRY 3
+#define SIM_PIN_MAX_RETRY 3
 
 class Network {
   public:
@@ -22,11 +23,17 @@ class Network {
       } else if (result.endsWith("SIM PIN")) {
         Serial.print(F("Inserting PIN "));
         Serial.println(PIN);
+        int retry_count = 0;
         ByteBuffer<MAX_SIZE> cmd;
         cmd.push("AT+CPIN=");
         cmd.push(PIN);
         sim808.sendCommand(cmd);
-        sim808.sendCommand("AT+CPIN?", result);
+        do {
+          sim808.sendCommand("AT+CPIN?", result);
+          delay(GRACE_PERIOD);
+          retry_count++;
+        } while (result == "+CME ERROR: SIM busy" && retry_count <= SIM_PIN_MAX_RETRY);
+
         if (!result.endsWith("READY")) {
           return 1;
         }
@@ -58,6 +65,8 @@ class Network {
       if (result.endsWith("5") || result.endsWith("2")) {
         Serial.println(F("Registered"));
       }
+      // Slow down blinking light
+      sim808.sendCommand("AT+SLEDS=2,64,15000");
 
       return ret;
     }
