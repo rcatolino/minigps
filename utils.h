@@ -17,7 +17,7 @@
 #define MAX_SIZE 160    // Max serial line size
 #define GRACE_PERIOD 200
 #define MAX_FIX_ATTEMPT 5 // Number of attempt before giving up on GNSS
-#define TIME_POWD 5      // Time to wait in power down state (multiple of 8s)
+#define TIME_POWD 50      // Time to wait in power down state (multiple of 8s)
 #define TIME_ACTIVE 5    // Time to wait in sleep state (multiple of 8s)
 #define SERIAL_TIMEOUT 10 // Time to wait an answer of the lonet module (multiple of GRACE_PERIOD)
 #define SIM_PIN "1234"
