@@ -22,9 +22,14 @@ void setup() {
     delay(500);
   }
 
+  mpu.setClockSource(MPU6050_CLOCK_INTERNAL_8MHZ); // We want to turn off the gyros
   mpu.setAccelOffsetX(0);
   mpu.setAccelOffsetY(0);
   mpu.setAccelOffsetZ(0);
+
+  mpu.setCycleEnabled(0);
+  mpu.setSleepEnabled(0);
+  mpu.setTempDisabled(0);
 
   Serial.println("Reading average acceleration : ");
   Vector ma = mean_accel();
@@ -44,8 +49,22 @@ void setup() {
   ma = mean_accel();
   Serial.println("Reading normated acceleration : ");
   printNorm();
+
+  // Set the MPU in low-power mode
+  mpu.setCycleEnabled(true);
+  mpu.setSleepEnabled(false);
+  mpu.setTempDisabled(true);
+  mpu.setGyroStandByX(true);
+  mpu.setGyroStandByY(true);
+  mpu.setGyroStandByZ(true);
+  mpu.setLowPowerFreq(MPU6050_LP_FREQ_40HZ);
+  // Still pulls 1.58 mA in LP/Sleep...
+
+  Serial.println(mpu.getGyroStandByX());
+  Serial.println(mpu.getGyroStandByY());
+  Serial.println(mpu.getGyroStandByZ());
+
   mpu.setIntMotionEnabled(true);
-  Serial.println("Interrupt status : ");
   if (mpu.getIntMotionEnabled()) {
     Serial.println("Interrupt when motion starts : True");
   } else {
@@ -121,7 +140,7 @@ Vector mean_accel(){
 }
 
 void calibration(){
-  int16_t noise = 10; // How noise can we tolerate, to low may not converge
+  int16_t noise = 20; // How noise can we tolerate, to low may not converge
   int range = 0;
   switch (mpu.getRange()) {
     case MPU6050_RANGE_16G:
